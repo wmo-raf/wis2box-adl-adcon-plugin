@@ -1,0 +1,8 @@
+ADCON_PARAMETER_SUBCLASSES = [
+    "TEMP",
+    "BAROMETRIC_PRESSURE",
+    "RH",
+    "RAIN",
+    "WINDDIR",
+    "WINDSPEED",
+]
