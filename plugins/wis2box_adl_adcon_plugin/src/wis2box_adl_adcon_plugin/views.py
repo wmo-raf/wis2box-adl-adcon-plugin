@@ -144,9 +144,6 @@ def station_parameter_mapping_create(request, station_mapping_id):
                 return redirect(reverse("station_parameter_mapping_list", args=[station_mapping_id]))
             except Exception as e:
                 form.add_error(None, e)
-
-                print(e)
-
                 context["form"] = form
                 return render(request, template_name, context)
         else:

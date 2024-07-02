@@ -24,12 +24,11 @@ class ParameterMappingForm(WagtailAdminModelForm):
         existing_adcon_parameter_node_ids = [parameter.analog_tag_node_id for parameter in existing_parameters]
 
         parameters = get_adcon_parameters_for_station(station_mapping.device_node_id)
+
         # Filter out parameters that are already mapped
         parameters = [parameter for parameter in parameters if parameter["id"] not in existing_adcon_parameter_node_ids]
 
         existing_parameters_ids = [parameter.parameter_id for parameter in existing_parameters]
-
-        print(existing_adcon_parameter_node_ids)
 
         # Filter out parameters that are already mapped
         self.fields["parameter"].queryset = self.fields["parameter"].queryset.exclude(id__in=existing_parameters_ids)
