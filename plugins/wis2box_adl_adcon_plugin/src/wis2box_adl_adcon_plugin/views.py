@@ -38,7 +38,7 @@ def wis2box_adl_adcon_plugin_index(request):
 
 
 def station_parameter_mapping_list(request, station_mapping_id):
-    queryset = StationParameterMapping.objects.filter(station=station_mapping_id)
+    queryset = StationParameterMapping.objects.filter(station_mapping=station_mapping_id)
 
     station_mapping_admin_helper = AdminURLHelper(StationMapping)
     station_mapping_index_url = station_mapping_admin_helper.get_action_url("index")
@@ -76,7 +76,7 @@ def station_parameter_mapping_list(request, station_mapping_id):
     ]
 
     columns = [
-        Column("station", label=_("Title")),
+        Column("station_mapping", label=_("Title")),
         Column("parameter", label=_("Parameter")),
         Column("analog_tag_node_id", label=_("ADCON Node ID")),
     ]
@@ -132,7 +132,7 @@ def station_parameter_mapping_create(request, station_mapping_id):
 
         if form.is_valid():
             station_parameter_mapping_data = {
-                "station": station_mapping,
+                "station_mapping": station_mapping,
                 "parameter": form.cleaned_data["parameter"],
                 "analog_tag_node_id": form.cleaned_data["adcon_parameter"],
             }

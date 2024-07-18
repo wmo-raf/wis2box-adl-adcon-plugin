@@ -20,7 +20,7 @@ class ParameterMappingForm(WagtailAdminModelForm):
         station_mapping_id = initial.get("station_mapping")
         station_mapping = StationMapping.objects.get(id=station_mapping_id)
 
-        existing_parameters = StationParameterMapping.objects.filter(station=station_mapping)
+        existing_parameters = StationParameterMapping.objects.filter(station_mapping=station_mapping)
         existing_adcon_parameter_node_ids = [parameter.analog_tag_node_id for parameter in existing_parameters]
 
         parameters = get_adcon_parameters_for_station(station_mapping.device_node_id)
