@@ -1,14 +1,14 @@
 import csv
-from io import StringIO
 import logging
+from datetime import timezone
+from io import StringIO
 
 from django.core.files.base import ContentFile
-from django.utils import timezone
+from django.utils import timezone as dj_timezone
 from django.utils.translation import gettext_lazy as _
 from wis2box_adl.core.constants import WIS2BOX_CSV_HEADER
 from wis2box_adl.core.models import DataIngestionRecord
 from wis2box_adl.core.registries import Plugin
-
 from wis2box_adl_adcon_plugin.data import get_adcon_data_for_station
 from wis2box_adl_adcon_plugin.db import get_connection
 from wis2box_adl_adcon_plugin.models import StationMapping
@@ -34,7 +34,7 @@ class AdconPlugin(Plugin):
 
         station_mappings = StationMapping.objects.filter(station_parameter_mappings__isnull=False).distinct()
 
-        local_time = timezone.localtime()
+        local_time = dj_timezone.localtime()
         logger.info(f"[WIS2BOX_ADL_ADCON_PLUGIN] Local time: {local_time}")
 
         if station_mappings:
@@ -65,15 +65,17 @@ class AdconPlugin(Plugin):
 
                     data_by_date = {}
                     for date, data in station_data.items():
-                        if not data_by_date.get(date):
+                        # convert the date to UTC. WIS2BOX expects the dates in UTC
+                        utc_date = date.replace(tzinfo=timezone.utc)
+                        if not data_by_date.get(utc_date):
                             date_info = {
-                                "year": date.year,
-                                "month": date.month,
-                                "day": date.day,
-                                "hour": date.hour,
-                                "minute": date.minute,
+                                "year": utc_date.year,
+                                "month": utc_date.month,
+                                "day": utc_date.day,
+                                "hour": utc_date.hour,
+                                "minute": utc_date.minute,
                             }
-                            data_by_date[date] = {
+                            data_by_date[utc_date] = {
                                 **station_wis2box_csv_metadata,
                                 **date_info
                             }
@@ -82,13 +84,13 @@ class AdconPlugin(Plugin):
                             for data_value in parameter_data:
                                 value = data_value.get('measuringvalue')
                                 parameter = parameters_as_dict.get(parameter_id)
-                                data_by_date[date].update({parameter.parameter: value})
+                                data_by_date[utc_date].update({parameter.parameter: value})
 
-                    for data_date, data_values in data_by_date.items():
+                    for utc_data_date, data_values in data_by_date.items():
                         logger.info(f"[WIS2BOX_ADL_ADCON_PLUGIN] Saving data for station {station.name} "
-                                    f"at {data_date}...")
+                                    f"at {utc_data_date} UTC")
 
-                        filename = f"WIGOS_{station.wigos_id}_{data_date.strftime('%Y%m%dT%H%M%S')}.csv"
+                        filename = f"WIGOS_{station.wigos_id}_{utc_data_date.strftime('%Y%m%dT%H%M%S')}.csv"
 
                         output = StringIO()
                         writer = csv.writer(output)
@@ -106,21 +108,23 @@ class AdconPlugin(Plugin):
                         file = ContentFile(csv_content, filename)
 
                         # check if the data ingestion record already exists
-                        ingestion_record = DataIngestionRecord.objects.filter(station=station, time=data_date).first()
+                        ingestion_record = DataIngestionRecord.objects.filter(station=station,
+                                                                              time=utc_data_date).first()
 
                         if ingestion_record:
                             # delete the old file
                             ingestion_record.file.delete()
                             ingestion_record.file = file
                         else:
-                            ingestion_record = DataIngestionRecord.objects.create(station=station, time=data_date,
+                            ingestion_record = DataIngestionRecord.objects.create(station=station, time=utc_data_date,
                                                                                   file=file)
                         ingestion_record.save()
 
-                        station_mapping.last_imported = data_date
+                        station_mapping.last_imported = utc_data_date
                         station_mapping.save()
 
-                        logger.info(f"[WIS2BOX_ADL_ADCON_PLUGIN] Data saved for station {station.name} at {data_date}")
+                        logger.info(
+                            f"[WIS2BOX_ADL_ADCON_PLUGIN] Data saved for station {station.name} at {utc_data_date}")
                 if some_data_found:
                     logger.info("[WIS2BOX_ADL_ADCON_PLUGIN] Data ingestion completed")
         else:

@@ -16,9 +16,19 @@ def get_adcon_data_for_station(connection_cursor, station_mapping_id, local_time
 
     station = station_mapping.station
     last_imported = station_mapping.last_imported
+
+    if last_imported:
+        # set the timezone of the last_imported date to the station timezone
+        last_imported = last_imported.replace(tzinfo=station.timezone)
+
     # use the default date if the last_imported date is not set
     if not last_imported:
         last_imported = WIS2BOX_ADL_ADCON_INIT_DATETIME
+        # set the timezone of the default last_imported date to the station timezone
+        last_imported = last_imported.replace(tzinfo=station.timezone)
+
+    # make sure local_time timezone is set to the station timezone
+    local_time = local_time.replace(tzinfo=station.timezone)
 
     # get the difference in months between the last imported date and the current date
     r = relativedelta(last_imported, local_time)
