@@ -60,15 +60,15 @@ def get_adcon_data_for_station(connection_cursor, station_mapping_id, local_time
 
         # organize the parameters data by date
         for tag_id, parameter_data in adcon_parameters_data.items():
-            parameter = station_parameter_mappings_by_tag_id[tag_id].parameter
+            parameter = station_parameter_mappings_by_tag_id.get(tag_id).parameter
 
             if not parameter_data:
                 continue
 
-            for p_date, value in parameter_data.items():
+            for p_date, values in parameter_data.items():
                 if p_date not in station_data:
                     station_data[p_date] = {}
-                station_data[p_date][parameter.pk] = value
+                station_data[p_date][parameter.pk] = values
 
     if not station_data:
         logger.info(f'[WIS2BOX_ADL_ADCON_PLUGIN]: No data found for {station} since {last_imported}')

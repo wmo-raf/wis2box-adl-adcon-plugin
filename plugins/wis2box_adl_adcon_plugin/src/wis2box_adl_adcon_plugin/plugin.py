@@ -50,7 +50,10 @@ class AdconPlugin(Plugin):
                     parameter_mappings = station_mapping.station_parameter_mappings.all()
                     parameters_as_dict = {}
                     for parameter_mapping in parameter_mappings:
-                        parameters_as_dict[parameter_mapping.parameter.pk] = parameter_mapping.parameter
+                        parameters_as_dict[parameter_mapping.parameter.pk] = {
+                            "station_parameter_mapping": parameter_mapping,
+                            "parameter": parameter_mapping.parameter,
+                        }
 
                     station_data = get_adcon_data_for_station(
                         cursor,
@@ -82,8 +85,14 @@ class AdconPlugin(Plugin):
 
                         for parameter_id, parameter_data in data.items():
                             for data_value in parameter_data:
+                                station_parameter_mapping = parameters_as_dict.get(parameter_id).get(
+                                    "station_parameter_mapping")
+                                parameter = parameters_as_dict.get(parameter_id).get("parameter")
+                                parameter = parameters_as_dict.get(parameter_id).get("parameter")
                                 value = data_value.get('measuringvalue')
-                                parameter = parameters_as_dict.get(parameter_id)
+                                if value:
+                                    value = station_parameter_mapping.get_standardized_value(value)
+
                                 data_by_date[utc_date].update({parameter.parameter: value})
 
                     for utc_data_date, data_values in data_by_date.items():

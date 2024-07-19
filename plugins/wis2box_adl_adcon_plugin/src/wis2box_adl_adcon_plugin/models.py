@@ -43,3 +43,14 @@ class StationParameterMapping(models.Model):
 
     def __str__(self):
         return f"{self.station_mapping} - {self.parameter} - {self.analog_tag_node_id}"
+
+    def get_standardized_value(self, value):
+        parameter_name = self.parameter.parameter
+        # convert air_temperture from °C to Kelvin
+        if parameter_name == "air_temperature":
+            return value + 273.15
+        # convert winspeed from km/h to m/s
+        elif parameter_name == "wind_speed":
+            return value / 3.6
+
+        return value
