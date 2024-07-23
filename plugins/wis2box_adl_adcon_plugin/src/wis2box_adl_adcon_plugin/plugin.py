@@ -37,6 +37,8 @@ class AdconPlugin(Plugin):
         local_time = dj_timezone.localtime()
         logger.info(f"[WIS2BOX_ADL_ADCON_PLUGIN] Local time: {local_time}")
 
+        ingestion_record_ids = []
+
         if station_mappings:
             with self.get_connection_cursor() as cursor:
                 some_data_found = False
@@ -132,6 +134,8 @@ class AdconPlugin(Plugin):
                         station_mapping.last_imported = utc_data_date
                         station_mapping.save()
 
+                        ingestion_record_ids.append(ingestion_record.pk)
+
                         logger.info(
                             f"[WIS2BOX_ADL_ADCON_PLUGIN] Data saved for station {station.name} at {utc_data_date}")
                 if some_data_found:
@@ -139,8 +143,4 @@ class AdconPlugin(Plugin):
         else:
             logger.info("[WIS2BOX_ADL_ADCON_PLUGIN] No ADCON station mappings found")
 
-    def parse_data(self):
-        pass
-
-    def load_data(self):
-        pass
+        return ingestion_record_ids
