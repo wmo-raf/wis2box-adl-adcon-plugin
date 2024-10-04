@@ -2,6 +2,7 @@ import logging
 
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
+from django.utils import timezone as dj_timezone
 
 from .db import get_data_for_parameters
 from .models import StationMapping
@@ -11,27 +12,24 @@ logger = logging.getLogger(__name__)
 WIS2BOX_ADL_ADCON_INIT_DATETIME = getattr(settings, 'WIS2BOX_ADL_ADCON_INIT_DATETIME')
 
 
-def get_adcon_data_for_station(connection_cursor, station_mapping_id, local_time):
+def get_adcon_data_for_station(connection_cursor, station_mapping_id, utc_time):
     station_mapping = StationMapping.objects.get(pk=station_mapping_id)
 
     station = station_mapping.station
     last_imported = station_mapping.last_imported
 
-    if last_imported:
-        # set the timezone of the last_imported date to the station timezone
-        last_imported = last_imported.replace(tzinfo=station.timezone)
-
-    # use the default date if the last_imported date is not set
+    # use the default date if the last_imported date is not found
     if not last_imported:
         last_imported = WIS2BOX_ADL_ADCON_INIT_DATETIME
-        # set the timezone of the default last_imported date to the station timezone
-        last_imported = last_imported.replace(tzinfo=station.timezone)
 
-    # make sure local_time timezone is set to the station timezone
-    local_time = local_time.replace(tzinfo=station.timezone)
+    # set the timezone of the default last_imported date to the station timezone
+    last_imported = dj_timezone.localtime(last_imported, station.timezone)
+
+    # make sure utc_time timezone is set to the station timezone
+    station_time = dj_timezone.localtime(utc_time, station.timezone)
 
     # get the difference in months between the last imported date and the current date
-    r = relativedelta(last_imported, local_time)
+    r = relativedelta(last_imported, station_time)
     months_difference = abs((r.years * 12) + r.months)
 
     # create a list of dates starting from the last imported date to the current date, with a step of 1 month
@@ -49,7 +47,7 @@ def get_adcon_data_for_station(connection_cursor, station_mapping_id, local_time
     for i, date in enumerate(date_list):
         start_date = date
         # get the next date in the list or the current date if there is no next date
-        end_date = date_list[i + 1] if i + 1 < len(date_list) else local_time
+        end_date = date_list[i + 1] if i + 1 < len(date_list) else station_time
 
         start_timestamp = int(start_date.timestamp())
         end_timestamp = int(end_date.timestamp())

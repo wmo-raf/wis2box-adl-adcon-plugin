@@ -1,14 +1,16 @@
 from django.core.paginator import Paginator, InvalidPage
-from django.shortcuts import render, redirect
+from django.http.response import JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, gettext
 from wagtail.admin import messages
-from wagtail.admin.widgets import HeaderButton
+from wagtail.admin.ui.tables import Column, Table, ButtonsColumnMixin
+from wagtail.admin.widgets import HeaderButton, ListingButton
 from wagtail_modeladmin.helpers import AdminURLHelper, PermissionHelper
 
+from .db import get_adcon_parameters_for_station
 from .forms import ParameterMappingForm
 from .models import StationMapping, StationParameterMapping
-from wagtail.admin.ui.tables import Column, Table
 
 
 def wis2box_adl_adcon_plugin_index(request):
@@ -75,8 +77,23 @@ def station_parameter_mapping_list(request, station_mapping_id):
         ),
     ]
 
+    class ColumnWithButtons(ButtonsColumnMixin, Column):
+        cell_template_name = "wagtailadmin/tables/title_cell.html"
+
+        def get_buttons(self, instance, parent_context):
+            delete_url = reverse("station_parameter_mapping_delete", args=[instance.id])
+            return [
+                ListingButton(
+                    _("Delete"),
+                    url=delete_url,
+                    icon_name="bin",
+                    priority=20,
+                    classname="serious",
+                ),
+            ]
+
     columns = [
-        Column("station_mapping", label=_("Title")),
+        ColumnWithButtons("station_mapping", label=_("Title")),
         Column("parameter", label=_("Parameter")),
         Column("analog_tag_node_id", label=_("ADCON Node ID")),
     ]
@@ -131,11 +148,20 @@ def station_parameter_mapping_create(request, station_mapping_id):
         form = ParameterMappingForm(request.POST, initial={"station_mapping": station_mapping_id})
 
         if form.is_valid():
+            adcon_parameter_id = form.cleaned_data["adcon_parameter"]
             station_parameter_mapping_data = {
                 "station_mapping": station_mapping,
                 "parameter": form.cleaned_data["parameter"],
-                "analog_tag_node_id": form.cleaned_data["adcon_parameter"],
+                "analog_tag_node_id": adcon_parameter_id,
             }
+
+            parameters = get_adcon_parameters_for_station(station_mapping.device_node_id)
+
+            for parameter in parameters:
+                if str(parameter["id"]) == str(adcon_parameter_id):
+                    station_parameter_mapping_data["units"] = parameter["units"]
+                    break
+
             try:
                 StationParameterMapping.objects.create(**station_parameter_mapping_data)
 
@@ -143,7 +169,7 @@ def station_parameter_mapping_create(request, station_mapping_id):
 
                 return redirect(reverse("station_parameter_mapping_list", args=[station_mapping_id]))
             except Exception as e:
-                form.add_error(None, e)
+                form.add_error(None, str(e))
                 context["form"] = form
                 return render(request, template_name, context)
         else:
@@ -156,3 +182,39 @@ def station_parameter_mapping_create(request, station_mapping_id):
         context["form"] = form
 
     return render(request, template_name, context)
+
+
+def station_parameter_mapping_delete(request, station_parameter_mapping_id):
+    station_parameter_mapping = get_object_or_404(StationParameterMapping, pk=station_parameter_mapping_id)
+
+    if request.method == "POST":
+        station_parameter_mapping.delete()
+        messages.success(request, _("Station Parameter Mapping deleted successfully."))
+        return redirect(reverse("station_parameter_mapping_list", args=[station_parameter_mapping.station_mapping_id]))
+
+    context = {
+        "page_title": gettext("Delete %(obj)s") % {"obj": station_parameter_mapping},
+        "header_icon": "snippet",
+        "is_protected": False,
+        "view": {
+            "confirmation_message": gettext("Are you sure you want to delete this %(model_name)s?") % {
+                "model_name": station_parameter_mapping._meta.verbose_name
+            },
+        },
+    }
+
+    return render(request, "wagtailadmin/generic/confirm_delete.html", context)
+
+
+def data_ingestion_records(request):
+    from wis2box_adl.core.models import DataIngestionRecord
+    from wis2box_adl.core.serializers import DataIngestionRecordSerializer
+
+    station_ids = StationMapping.objects.filter(
+        station_parameter_mappings__isnull=False).distinct().values_list("station_id", flat=True)
+
+    records = DataIngestionRecord.objects.filter(station_id__in=station_ids)
+
+    data = DataIngestionRecordSerializer(records, many=True).data
+
+    return JsonResponse(data, safe=False)

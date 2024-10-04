@@ -34,8 +34,8 @@ class AdconPlugin(Plugin):
 
         station_mappings = StationMapping.objects.filter(station_parameter_mappings__isnull=False).distinct()
 
-        local_time = dj_timezone.localtime()
-        logger.info(f"[WIS2BOX_ADL_ADCON_PLUGIN] Local time: {local_time}")
+        utc_time = dj_timezone.localtime(timezone=timezone.utc)
+        logger.info(f"[WIS2BOX_ADL_ADCON_PLUGIN] UTC time: {utc_time}")
 
         ingestion_record_ids = []
 
@@ -60,7 +60,7 @@ class AdconPlugin(Plugin):
                     station_data = get_adcon_data_for_station(
                         cursor,
                         station_mapping.pk,
-                        local_time
+                        utc_time
                     )
 
                     if not station_data:
@@ -71,7 +71,7 @@ class AdconPlugin(Plugin):
                     data_by_date = {}
                     for date, data in station_data.items():
                         # convert the date to UTC. WIS2BOX expects the dates in UTC
-                        utc_date = date.replace(tzinfo=timezone.utc)
+                        utc_date = dj_timezone.localtime(date, timezone.utc)
                         if not data_by_date.get(utc_date):
                             date_info = {
                                 "year": utc_date.year,
@@ -89,7 +89,6 @@ class AdconPlugin(Plugin):
                             for data_value in parameter_data:
                                 station_parameter_mapping = parameters_as_dict.get(parameter_id).get(
                                     "station_parameter_mapping")
-                                parameter = parameters_as_dict.get(parameter_id).get("parameter")
                                 parameter = parameters_as_dict.get(parameter_id).get("parameter")
                                 value = data_value.get('measuringvalue')
                                 if value:
@@ -131,15 +130,18 @@ class AdconPlugin(Plugin):
                                                                                   file=file)
                         ingestion_record.save()
 
-                        station_mapping.last_imported = utc_data_date
-                        station_mapping.save()
+                        last_imported = dj_timezone.localtime(station_mapping.last_imported, timezone=timezone.utc)
+
+                        if utc_data_date > last_imported:
+                            station_mapping.last_imported = utc_data_date
+                            station_mapping.save()
 
                         ingestion_record_ids.append(ingestion_record.pk)
 
                         logger.info(
                             f"[WIS2BOX_ADL_ADCON_PLUGIN] Data saved for station {station.name} at {utc_data_date}")
                 if some_data_found:
-                    logger.info("[WIS2BOX_ADL_ADCON_PLUGIN] Data ingestion completed")
+                    logger.info("[WIS2BOX_ADL_ADCON_PLUGIN] ADCON Data fetching completed")
         else:
             logger.info("[WIS2BOX_ADL_ADCON_PLUGIN] No ADCON station mappings found")
 

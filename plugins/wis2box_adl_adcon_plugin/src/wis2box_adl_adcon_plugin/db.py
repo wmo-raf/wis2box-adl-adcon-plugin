@@ -4,7 +4,7 @@ import dj_database_url
 import psycopg2
 from django.conf import settings
 
-from .constants import ADCON_PARAMETER_SUBCLASSES
+from .constants import ADCON_PARAMETER_SUBCLASSES, ADCON_PARAMETER_SUBCLASSES_WITH_UNITS
 
 
 def get_connection():
@@ -48,6 +48,11 @@ def get_adcon_parameters_for_station(adcon_station_id):
     parameters = [dict(zip([column.name for column in cursor.description], parameter)) for parameter in parameters]
 
     parameters = [parameter for parameter in parameters if parameter["subclass"] in ADCON_PARAMETER_SUBCLASSES]
+
+    for parameter in parameters:
+        units = ADCON_PARAMETER_SUBCLASSES_WITH_UNITS.get(parameter["subclass"])
+        if units:
+            parameter["units"] = units
 
     return parameters
 
