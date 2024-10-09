@@ -6,12 +6,12 @@ from wis2box_adl_adcon_plugin.models import StationParameterMapping, StationMapp
 
 
 class ParameterMappingForm(WagtailAdminModelForm):
-    station_mapping = forms.ModelChoiceField(queryset=StationMapping.objects.all(), widget=forms.HiddenInput())
     adcon_parameter = forms.ChoiceField(choices=[])
+    station_mapping = forms.ModelChoiceField(queryset=StationMapping.objects.all(), widget=forms.HiddenInput())
 
     class Meta:
         model = StationParameterMapping
-        fields = ["parameter", "adcon_parameter"]
+        fields = ["adcon_parameter", "parameter"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

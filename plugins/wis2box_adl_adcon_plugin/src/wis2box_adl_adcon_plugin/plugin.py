@@ -89,12 +89,14 @@ class AdconPlugin(Plugin):
                             for data_value in parameter_data:
                                 station_parameter_mapping = parameters_as_dict.get(parameter_id).get(
                                     "station_parameter_mapping")
-                                parameter = parameters_as_dict.get(parameter_id).get("parameter")
-                                value = data_value.get('measuringvalue')
-                                if value:
-                                    value = station_parameter_mapping.get_standardized_value(value)
 
-                                data_by_date[utc_date].update({parameter.parameter: value})
+                                parameter = parameters_as_dict.get(parameter_id).get("parameter")
+                                from_units = station_parameter_mapping.units
+                                value = data_value.get('measuringvalue')
+
+                                if value:
+                                    value = parameter.convert_value_units(value, from_units)
+                                    data_by_date[utc_date].update({parameter.parameter: value})
 
                     for utc_data_date, data_values in data_by_date.items():
                         logger.info(f"[WIS2BOX_ADL_ADCON_PLUGIN] Saving data for station {station.name} "

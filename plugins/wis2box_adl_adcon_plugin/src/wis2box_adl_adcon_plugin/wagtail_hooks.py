@@ -13,7 +13,7 @@ from .views import (
     station_parameter_mapping_list,
     station_parameter_mapping_create,
     data_ingestion_records,
-    station_parameter_mapping_delete
+    station_parameter_mapping_delete, adcon_station_detail
 )
 
 
@@ -21,6 +21,8 @@ from .views import (
 def urlconf_wis2box_adl_adcon_plugin():
     return [
         path('wis2box_adl_adcon_plugin/', wis2box_adl_adcon_plugin_index, name='wis2box_adl_adcon_plugin_index'),
+        path('wis2box_adl_adcon_plugin/station_detail/<int:station_mapping_id>/', adcon_station_detail,
+             name='wis2box_adl_station_detail'),
         path('wis2box_adl_adcon_plugin/station_parameter_mapping/<int:station_mapping_id>/',
              station_parameter_mapping_list, name='station_parameter_mapping_list'),
         path('wis2box_adl_adcon_plugin/station_parameter_mapping/delete/<int:station_parameter_mapping_id>/',
@@ -44,9 +46,22 @@ class StationMappingAdmin(ModelAdmin):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.list_display = (list(self.list_display) or []) + ["parameter_mapping"]
+        self.list_display = (list(self.list_display) or []) + ["detail", "parameter_mapping"]
 
+        self.detail.__func__.short_description = _('Detail')
         self.parameter_mapping.__func__.short_description = _('Parameter Mapping')
+
+    def detail(self, obj):
+        label = obj.device_node_id
+
+        url = reverse("wis2box_adl_station_detail", args=[obj.id])
+
+        button_html = f"""
+            <a href="{url}">
+              {label}
+            </a>
+        """
+        return mark_safe(button_html)
 
     def parameter_mapping(self, obj):
         label = _("Parameter Mapping")

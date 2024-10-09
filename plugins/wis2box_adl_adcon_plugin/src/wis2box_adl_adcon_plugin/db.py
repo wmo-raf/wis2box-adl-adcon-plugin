@@ -34,7 +34,7 @@ def get_adcon_stations():
     return stations
 
 
-def get_adcon_parameters_for_station(adcon_station_id):
+def get_adcon_parameters_for_station(adcon_station_id, filtered=True):
     connection = get_connection()
 
     with connection.cursor() as cursor:
@@ -47,7 +47,8 @@ def get_adcon_parameters_for_station(adcon_station_id):
 
     parameters = [dict(zip([column.name for column in cursor.description], parameter)) for parameter in parameters]
 
-    parameters = [parameter for parameter in parameters if parameter["subclass"] in ADCON_PARAMETER_SUBCLASSES]
+    if filtered:
+        parameters = [parameter for parameter in parameters if parameter["subclass"] in ADCON_PARAMETER_SUBCLASSES]
 
     for parameter in parameters:
         units = ADCON_PARAMETER_SUBCLASSES_WITH_UNITS.get(parameter["subclass"])

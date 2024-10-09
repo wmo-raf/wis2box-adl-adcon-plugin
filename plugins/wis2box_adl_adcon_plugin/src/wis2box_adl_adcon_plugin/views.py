@@ -39,6 +39,20 @@ def wis2box_adl_adcon_plugin_index(request):
     return render(request, template_name, context)
 
 
+def adcon_station_detail(request, station_mapping_id):
+    station_mapping = StationMapping.objects.get(pk=station_mapping_id)
+    device_node_id = station_mapping.device_node_id
+
+    station_parameters = get_adcon_parameters_for_station(device_node_id, filtered=False)
+
+    context = {
+        "station_mapping": station_mapping,
+        "station_parameters": station_parameters,
+    }
+
+    return render(request, "wis2box_adl_adcon_plugin/station_detail.html", context)
+
+
 def station_parameter_mapping_list(request, station_mapping_id):
     queryset = StationParameterMapping.objects.filter(station_mapping=station_mapping_id)
 
