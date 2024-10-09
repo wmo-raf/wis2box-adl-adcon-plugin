@@ -33,7 +33,7 @@ class StationMapping(models.Model):
 class StationParameterMapping(models.Model):
     station_mapping = models.ForeignKey(StationMapping, on_delete=models.CASCADE, verbose_name=_("Station Mapping"),
                                         related_name="station_parameter_mappings")
-    parameter = models.OneToOneField("core.DataParameter", on_delete=models.CASCADE, verbose_name=_("Parameter"))
+    parameter = models.ForeignKey("core.DataParameter", on_delete=models.CASCADE, verbose_name=_("Parameter"))
     analog_tag_node_id = models.PositiveIntegerField(verbose_name=_("Analog Tag Node ID"), unique=True)
     units = models.CharField(max_length=10, verbose_name=_("Units"), default=None)
 
