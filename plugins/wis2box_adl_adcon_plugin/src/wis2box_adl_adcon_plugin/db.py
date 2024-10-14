@@ -26,7 +26,7 @@ def get_adcon_stations():
 
     with connection.cursor() as cursor:
         cursor.execute("""SELECT id, displayname,latitude,longitude,timezoneid 
-                            FROM node_60 WHERE dtype ='DeviceNode' and latitude is not null and longitude is not null""")
+                            FROM node_60 WHERE dtype ='DeviceNode'""")
         stations = cursor.fetchall()
 
     stations = [dict(zip([column.name for column in cursor.description], station)) for station in stations]
