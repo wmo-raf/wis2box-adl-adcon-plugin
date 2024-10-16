@@ -17,8 +17,8 @@ class StationMapping(models.Model):
     last_imported = models.DateTimeField(verbose_name=_("Last Imported"), null=True, blank=True)
 
     panels = [
-        FieldPanel('device_node_id', widget=AdconStationSelectWidget),
         FieldPanel('station'),
+        FieldPanel('device_node_id', widget=AdconStationSelectWidget),
     ]
 
     class Meta:
