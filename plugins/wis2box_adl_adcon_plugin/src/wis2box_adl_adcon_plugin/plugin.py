@@ -94,7 +94,7 @@ class AdconPlugin(Plugin):
                                 from_units = station_parameter_mapping.units
                                 value = data_value.get('measuringvalue')
 
-                                if value:
+                                if value is not None:
                                     # try converting the value to the standard units
                                     try:
                                         value = parameter.convert_value_units(value, from_units)
@@ -102,6 +102,9 @@ class AdconPlugin(Plugin):
                                     except Exception as e:
                                         logger.error(f"[WIS2BOX_ADL_ADCON_PLUGIN] Error converting value for parameter "
                                                      f"{parameter.parameter}: {e}")
+                                else:
+                                    logger.info(
+                                        f"[WIS2BOX_ADL_ADCON_PLUGIN] No data recorded for parameter {parameter.parameter} ")
 
                     for utc_data_date, data_values in data_by_date.items():
                         logger.info(f"[WIS2BOX_ADL_ADCON_PLUGIN] Saving data for station {station.name} "
