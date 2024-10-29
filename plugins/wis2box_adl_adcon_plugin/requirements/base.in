@@ -1,0 +1,4 @@
+wagtail>=4.2.2
+psycopg2>=2.9.9
+wagtail-modeladmin>=2.0.0
+python-dateutil>=2.9.0.post0
