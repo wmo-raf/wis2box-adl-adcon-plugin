@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from wagtail.admin.panels import FieldPanel
+from wagtail.contrib.settings.models import BaseSiteSetting
+from wagtail.contrib.settings.registry import register_setting
 from wagtail.snippets.models import register_snippet
 from wis2box_adl.core.units import units
 
@@ -54,3 +56,19 @@ class StationParameterMapping(models.Model):
         value_converted = quantity.to(final_units).magnitude
 
         return value_converted
+
+
+@register_setting
+class AdconSettings(BaseSiteSetting):
+    filter_stations_with_coords = models.BooleanField(default=True,
+                                                      verbose_name=_("Filter Stations with Coordinates"),
+                                                      help_text=_("Only show stations that have latitude and longitude "
+                                                                  "in the ADCON Station Linking"))
+
+    panels = [
+        FieldPanel("filter_stations_with_coords"),
+    ]
+
+    class Meta:
+        verbose_name = _("ADCON Settings")
+        verbose_name_plural = _("ADCON Settings")

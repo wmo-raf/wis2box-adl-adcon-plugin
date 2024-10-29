@@ -3,6 +3,7 @@ from datetime import datetime
 import dj_database_url
 import psycopg2
 from django.conf import settings
+from wagtail.models import Site
 
 from .constants import ADCON_PARAMETER_SUBCLASSES, ADCON_PARAMETER_SUBCLASSES_WITH_UNITS
 
@@ -22,11 +23,20 @@ def get_connection():
 
 
 def get_adcon_stations():
+    from .models import AdconSettings
+
+    site = Site.objects.get(is_default_site=True)
+    adcon_settings = AdconSettings.for_site(site)
+
     connection = get_connection()
 
+    sql = "SELECT id, displayname,latitude,longitude,timezoneid FROM node_60 WHERE dtype ='DeviceNode'"
+
+    if adcon_settings.filter_stations_with_coords:
+        sql += " AND latitude IS NOT NULL AND longitude IS NOT NULL"
+
     with connection.cursor() as cursor:
-        cursor.execute("""SELECT id, displayname,latitude,longitude,timezoneid 
-                            FROM node_60 WHERE dtype ='DeviceNode'""")
+        cursor.execute(sql)
         stations = cursor.fetchall()
 
     stations = [dict(zip([column.name for column in cursor.description], station)) for station in stations]
