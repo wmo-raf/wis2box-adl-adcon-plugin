@@ -25,15 +25,18 @@ def get_connection():
 def get_adcon_stations():
     from .models import AdconSettings
 
-    site = Site.objects.get(is_default_site=True)
-    adcon_settings = AdconSettings.for_site(site)
-
     connection = get_connection()
 
     sql = "SELECT id, displayname,latitude,longitude,timezoneid FROM node_60 WHERE dtype ='DeviceNode'"
 
-    if adcon_settings.filter_stations_with_coords:
-        sql += " AND latitude IS NOT NULL AND longitude IS NOT NULL"
+    try:
+        site = Site.objects.get(is_default_site=True)
+        adcon_settings = AdconSettings.for_site(site)
+
+        if adcon_settings.filter_stations_with_coords:
+            sql += " AND latitude IS NOT NULL AND longitude IS NOT NULL"
+    except Exception:
+        pass
 
     with connection.cursor() as cursor:
         cursor.execute(sql)
