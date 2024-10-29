@@ -16,8 +16,9 @@ charset-normalizer==3.4.0
     # via requests
 defusedxml==0.7.1
     # via willow
-django==5.1.2
+django==5.0.6
     # via
+    #   -r base.in
     #   django-filter
     #   django-modelcluster
     #   django-permissionedforms
@@ -82,7 +83,7 @@ typing-extensions==4.12.2
     # via asgiref
 urllib3==2.2.3
     # via requests
-wagtail==6.2.2
+wagtail==6.1.2
     # via
     #   -r base.in
     #   wagtail-modeladmin
