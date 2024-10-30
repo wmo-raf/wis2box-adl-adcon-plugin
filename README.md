@@ -80,6 +80,8 @@ If you are not sure of the location, check the running services on the Windows s
 Then look at its properties and the command used to start the service. This will point you to where you might expect to
 find the configuration files.
 
+> Make backups of the configuration files before making any changes.
+
 The `pg_hba.conf` file is used to control client authentication. We need to add a new line to allow connections from the
 WIS2Box ADL server.
 
