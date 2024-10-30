@@ -18,10 +18,14 @@ functionality to ingest data from ADCON AWS Network into the WIS2Box.
 This plugin contains Django/Wagtail app that should be installed in the WIS2Box ADL project. This means that you need to
 have the WIS2Box ADL project installed and running before you can install this plugin.
 
+### 1. Install and set up the ADL Project
+
+ADL is the core project where plugins can be installed.
+
 For installation of the WIS2Box ADL project, please refer to the [WIS2Box ADL](https://github.com/wmo-raf/wis2box-adl)
 documentation.
 
-### 1. Add the plugin to the WIS2Box ADL project
+### 2. Add the plugin to the WIS2Box ADL project
 
 At the root of the `wis2box-adl`, edit the `.env` file and add the following line:
 
@@ -32,7 +36,7 @@ WIS2BOX_ADL_PLUGIN_GIT_REPOS="https://github.com/wmo-raf/wis2box-adl-adcon-plugi
 The `WIS2BOX_ADL_PLUGIN_GIT_REPOS` is a comma separated list of git repositories that contain the ADL plugins. If there
 is an existing plugin url, add the new plugin repository to the list separated by a comma.
 
-### 2. Add custom environment variables
+### 3. Add custom environment variables
 
 `wis2box-adl-adcon-plugin` requires the following environment variables to be set:
 
@@ -127,7 +131,7 @@ WIS2BOX_ADL_ADCON_DATABASE_URL=postgres://postgres:postgres@<ADCON_SERVER_IP>:54
 
 Replace `<ADCON_SERVER_IP>` with the IP address of the Windows server where the PostgreSQL database is installed.
 
-### 3. Update Docker Compose configuration
+### 4. Update Docker Compose configuration
 
 After adding the variables to the `.env` file, we need to update our `docker compose` configuration to include these new
 variables. We do not want to edit the core `docker-compose.yml` file, instead we will create a new file
